@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мій Cookbook 🧑‍🍳</title>
+    <style>
+        /* Базові стилі для гарного вигляду */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f7f6;
+        }
+        h1 { color: #2c3e50; text-align: center; }
+        
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        form input, form textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box; /* щоб padding не вилізав за межі */
+        }
+
+        button {
+            background-color: #27ae60;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        button:hover { background-color: #219150; }
+
+        .recipe {
+            border-left: 5px solid #27ae60;
+            padding-left: 15px;
+            margin-bottom: 20px;
+        }
+        .recipe h3 { margin: 0; color: #2c3e50; }
+        .recipe p { color: #7f8c8d; }
+    </style>
+</head>
+<body>
+
+    <h1>Книга рецептів 📖</h1>
+
+    <!-- Форма додавання -->
+    <div class="card">
+        <h2>Новий рецепт</h2>
+        <form id="recipe-form">
+            <input type="text" id="title" placeholder="Назва страви (напр. Борщ)" required>
+            <textarea id="description" rows="4" placeholder="Опис та інгредієнти..." required></textarea>
+            <button type="submit">Додати до книги</button>
+        </form>
+    </div>
+
+    <!-- Список рецептів -->
+    <div class="card">
+        <h2>Збережені рецепти</h2>
+        <div id="recipe-list">
+            <p>Завантаження рецептів...</p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api/recipes';
+        const recipeList = document.getElementById('recipe-list');
+        const recipeForm = document.getElementById('recipe-form');
+
+        // 1. Функція завантаження рецептів із бази
+        async function loadRecipes() {
+            try {
+                const response = await fetch(API_URL);
+                const recipes = await response.json();
+                
+                recipeList.innerHTML = ''; // Очищуємо список перед оновленням
+
+                if (recipes.length === 0) {
+                    recipeList.innerHTML = '<p>Рецептів поки немає. Додайте перший!</p>';
+                    return;
+                }
+
+                recipes.forEach(recipe => {
+                    const div = document.createElement('div');
+                    div.className = 'recipe';
+                    div.innerHTML = `
+                        <h3>${recipe.title}</h3>
+                        <p>${recipe.description}</p>
+                        <hr>
+                    `;
+                    recipeList.appendChild(div);
+                });
+            } catch (error) {
+                recipeList.innerHTML = '<p style="color: red;">Помилка зв\'язку з сервером. Перевірте, чи запущений backend!</p>';
+                console.error('Error:', error);
+            }
+        }
+
+        // 2. Функція відправки нового рецепта
+        recipeForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Зупиняємо перезавантаження сторінки
+
+            const title = document.getElementById('title').value;
+            const description = document.getElementById('description').value;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, description })
+                });
+
+                if (response.ok) {
+                    recipeForm.reset(); // Очищуємо поля форми
+                    loadRecipes();     // Оновлюємо список
+                }
+            } catch (error) {
+                alert('Не вдалося зберегти рецепт');
+                console.error('Error:', error);
+            }
+        });
+
+        // Завантажуємо дані при відкритті сторінки
+        loadRecipes();
+    </script>
+</body>
+</html>
